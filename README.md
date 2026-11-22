@@ -26,7 +26,7 @@ All thresholds live in [`monitor/config.py`](monitor/config.py). They are assump
 
 ## What the first run found
 
-The first check (22 November 2026, about three months after the flood) recorded no current reading for the mainstem gauges at Rasuwagadi, Shyaprubesi and Betrawati. That fits the reports above that these stations were destroyed, but this project cannot confirm why a station is silent. Nationally, roughly half of the listed river stations had no reading in the feed. Some of those may be seasonal, manual or retired stations rather than failures; the feed does not say which.
+The first check (22 November 2026, about three months after the flood) recorded no current reading for the mainstem gauges at Rasuwagadi, Shyaprubesi and Betrawati. That fits the reports above that these stations were destroyed, but this project cannot confirm why a station is silent. In the same feed, DHM's status field still read "BELOW WARNING LEVEL" for each of those stations, so anyone reading the status alone would see a calm river rather than a missing gauge. Nationally, roughly half of the listed river stations had no reading in the feed. Some of those may be seasonal, manual or retired stations rather than failures; the feed does not say which.
 
 ## How it works
 

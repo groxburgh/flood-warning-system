@@ -78,6 +78,9 @@ th{font-weight:600;color:var(--muted);font-size:.8rem;text-transform:uppercase;l
 .spark polyline,.chart polyline{fill:none;stroke:var(--accent);stroke-width:1.6}.chart{width:100%;height:auto}.axis{stroke:var(--line)}.tick{fill:var(--muted);font-size:10px}
 .kpis{display:flex;gap:12px;flex-wrap:wrap}.kpi{border:1px solid var(--line);border-radius:8px;padding:10px 14px;min-width:120px}.kpi b{display:block;font-size:1.4rem}
 .wrap{overflow-x:auto}a{color:var(--accent)}footer{margin-top:40px;font-size:.85rem}
+@media (max-width:640px){table.cards,table.cards tbody,table.cards tr,table.cards td{display:block;width:100%}
+table.cards tr.head{display:none}table.cards tr{border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin:0 0 10px}
+table.cards td{border:0;padding:4px 0}table.cards td[data-l]::before{content:attr(data-l);display:block;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.03em}}
 """
 
 
@@ -106,7 +109,7 @@ def render(site_dir: Path, latest: dict | None, national_rows: list[dict], histo
                      f"<p class='muted small'>Late = no reading for {config.LATE_AFTER_MIN} min; "
                      f"silent = none for {config.SILENT_AFTER_MIN // 60} h; no data = DHM's feed lists the "
                      "station with no reading. Thresholds are assumptions, not DHM's.</p>"
-                     "<div class='wrap'><table><tr><th>Station</th><th>Reporting</th><th>Latest reading</th>"
+                     "<div class='wrap'><table class='cards'><tr class='head'><th>Station</th><th>Reporting</th><th>Latest reading</th>"
                      "<th>DHM status</th><th>Last 48 h</th></tr>")
         for r in latest["corridor"]:
             cls = STATE_CLASS.get(r["state"], "nodata")
@@ -121,11 +124,11 @@ def render(site_dir: Path, latest: dict | None, national_rows: list[dict], histo
             parts.append(
                 f"<tr><td><a href='https://www.dhm.gov.np/hydrology/hms-Single/{r['id']}'>{esc(r['label'])}</a>"
                 f"<div class='muted small'>{esc(r['role'])}</div></td>"
-                f"<td><span class='badge {cls}'>{esc(r['state'])}</span><div class='muted small'>age {_age(r['age_min'])}</div></td>"
-                f"<td>{value}<div class='muted small'>{esc(_t(r['reading_time']))}</div>{rise}</td>"
-                f"<td>{esc(r.get('dhm_status') or '—')}<div class='muted small'>{esc(r.get('dhm_trend') or '')}"
+                f"<td data-l='Reporting'><span class='badge {cls}'>{esc(r['state'])}</span><div class='muted small'>age {_age(r['age_min'])}</div></td>"
+                f"<td data-l='Latest reading'>{value}<div class='muted small'>{esc(_t(r['reading_time']))}</div>{rise}</td>"
+                f"<td data-l='DHM status'>{esc(r.get('dhm_status') or '—')}<div class='muted small'>{esc(r.get('dhm_trend') or '')}"
                 f"{' · ' if levels and r.get('dhm_trend') else ''}{' · '.join(levels)}</div></td>"
-                f"<td>{_spark(history.get(r['id'], []))}</td></tr>")
+                f"<td data-l='Last 48 h'>{_spark(history.get(r['id'], []))}</td></tr>")
         parts.append("</table></div>")
 
         n = latest["national"]
