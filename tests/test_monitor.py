@@ -109,6 +109,14 @@ def test_full_pass_offline(tmp_path):
     assert latest["national"]["total"] == len(stations)
     assert "This is not a warning system" in (site / "index.html").read_text()
 
+    # Second check: the reporting record counts both.
+    assert run.main(["--store", str(store), "--site", str(site), "--html", str(src),
+                     "--now", (NOW + timedelta(minutes=60)).isoformat()]) == 0
+    rec = __import__("monitor.store", fromlist=["x"]).reporting_record(store)
+    assert rec["stations"][ids[1]] == {"checks": 2, "ok": 1}  # reading 10 min old, then 70 min old
+    assert rec["stations"][ids[0]] == {"checks": 2, "ok": 0}  # no data both times
+    assert "Reporting record" in (site / "index.html").read_text()
+
 
 def test_source_error_keeps_previous_page(tmp_path):
     bad = tmp_path / "bad.html"

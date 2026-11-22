@@ -77,7 +77,7 @@ def main(argv: list[str] | None = None) -> int:
         last = datetime.fromisoformat(previous["checked_at"]) if previous else now
         site.render(args.site, previous, store.load_national(args.store),
                     store.load_corridor_history(args.store), store.load_events(args.store),
-                    checked_at=last, archived_at=end_at)
+                    checked_at=last, archived_at=end_at, record=store.reporting_record(args.store))
         store.mark_archived(args.store, end_at)
         print(f"monitoring ended at {end_at.isoformat()}; archive page rendered")
         return 0
@@ -89,7 +89,8 @@ def main(argv: list[str] | None = None) -> int:
         store.append_events(args.store, [[now.isoformat(), "", "DHM source", "SOURCE ERROR", str(exc)[:300]]])
         site.render(args.site, previous, store.load_national(args.store),
                     store.load_corridor_history(args.store), store.load_events(args.store),
-                    source_error=f"{type(exc).__name__}: {exc}"[:300], checked_at=now)
+                    source_error=f"{type(exc).__name__}: {exc}"[:300], checked_at=now,
+                    record=store.reporting_record(args.store))
         print(f"source error: {exc}", file=sys.stderr)
         # Exit 2 marks a source error. The workflow treats it as handled (shown on the
         # page) so an unattended project does not send a failure email every 30 minutes.
@@ -108,6 +109,7 @@ def main(argv: list[str] | None = None) -> int:
     corridor = corridor_status(stations, history, now)
     national = checks.national_summary(stations, now)
     store.append_national(args.store, now, national)
+    store.append_corridor_checks(args.store, now, corridor)
     store.append_events(args.store, transitions(previous, corridor, now))
 
     latest = {"checked_at": now.isoformat(), "corridor": corridor, "national": national,
@@ -117,7 +119,7 @@ def main(argv: list[str] | None = None) -> int:
     cutoff = now - timedelta(hours=config.CHART_HOURS)
     chart_history = {sid: [(t, v) for t, v in pts if t >= cutoff] for sid, pts in history.items()}
     site.render(args.site, latest, store.load_national(args.store), chart_history,
-                store.load_events(args.store), checked_at=now)
+                store.load_events(args.store), checked_at=now, record=store.reporting_record(args.store))
 
     print(f"{len(stations)} stations parsed; {added} new corridor readings; national {national}")
     for r in corridor:

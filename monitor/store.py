@@ -87,6 +87,31 @@ def load_latest(store: Path) -> dict | None:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+CORRIDOR_CHECKS = "corridor_checks.csv"
+
+
+def append_corridor_checks(store: Path, fetched: datetime, rows: list[dict]) -> None:
+    """One row per corridor station per check: the reporting state at that check."""
+    _append(store / CORRIDOR_CHECKS, ["checked_at_utc", "station_id", "state"],
+            [[fetched.isoformat(), r["id"], r["state"]] for r in rows])
+
+
+def reporting_record(store: Path) -> dict:
+    """Per station: number of checks, and how many found it reporting on time (OK).
+    Also returns the first check time, so the page can say "since ..."."""
+    path = store / CORRIDOR_CHECKS
+    out: dict = {"since": None, "stations": {}}
+    if not path.exists():
+        return out
+    with path.open(encoding="utf-8") as fh:
+        for row in csv.DictReader(fh):
+            out["since"] = out["since"] or row["checked_at_utc"]
+            s = out["stations"].setdefault(int(row["station_id"]), {"checks": 0, "ok": 0})
+            s["checks"] += 1
+            s["ok"] += row["state"] == "OK"
+    return out
+
+
 ARCHIVED = "ARCHIVED"
 
 

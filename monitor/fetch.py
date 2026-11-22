@@ -35,8 +35,8 @@ KEEP_FIELDS = (
 _ARRAY_RE = re.compile(r"var\s+riverwatch_coordinates\s*=\s*(\[.*?\]);\s*$", re.S | re.M)
 
 USER_AGENT = (
-    "bhote-koshi-watch/0.1 (public monitoring prototype; "
-    "https://github.com/groxburgh/flood-warning-system)"
+    "nepal-flood-gauge-monitor/0.1 (public monitoring prototype; "
+    "https://github.com/groxburgh/nepal-flood-gauge-monitor)"
 )
 
 

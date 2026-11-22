@@ -78,6 +78,7 @@ th{font-weight:600;color:var(--muted);font-size:.8rem;text-transform:uppercase;l
 .spark polyline,.chart polyline{fill:none;stroke:var(--accent);stroke-width:1.6}.chart{width:100%;height:auto}.axis{stroke:var(--line)}.tick{fill:var(--muted);font-size:10px}
 .kpis{display:flex;gap:12px;flex-wrap:wrap}.kpi{border:1px solid var(--line);border-radius:8px;padding:10px 14px;min-width:120px}.kpi b{display:block;font-size:1.4rem}
 .wrap{overflow-x:auto}a{color:var(--accent)}footer{margin-top:40px;font-size:.85rem}
+.bar{display:inline-block;width:90px;height:8px;border-radius:4px;background:var(--line);vertical-align:middle;overflow:hidden}.bar span{display:block;height:100%;background:var(--ok)}
 @media (max-width:640px){table.cards,table.cards tbody,table.cards tr,table.cards td{display:block;width:100%}
 table.cards tr.head{display:none}table.cards tr{border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin:0 0 10px}
 table.cards td{border:0;padding:4px 0}table.cards td[data-l]::before{content:attr(data-l);display:block;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.03em}}
@@ -86,13 +87,13 @@ table.cards td{border:0;padding:4px 0}table.cards td[data-l]::before{content:att
 
 def render(site_dir: Path, latest: dict | None, national_rows: list[dict], history: dict,
            events: list[dict], checked_at: datetime, source_error: str | None = None,
-           archived_at: datetime | None = None) -> None:
+           archived_at: datetime | None = None, record: dict | None = None) -> None:
     site_dir.mkdir(parents=True, exist_ok=True)
     esc = html.escape
     parts = [f"<!doctype html><html lang='en'><head><meta charset='utf-8'>"
              f"<meta name='viewport' content='width=device-width,initial-scale=1'>"
-             f"<title>Bhote Koshi–Trishuli gauge watch</title><style>{CSS}</style></head><body><main>",
-             "<h1>Bhote Koshi–Trishuli gauge watch</h1>",
+             f"<title>Nepal flood gauge monitor</title><style>{CSS}</style></head><body><main>",
+             "<h1>Nepal flood gauge monitor</h1><p class='muted'>Bhote Koshi–Trishuli corridor</p>",
              f"<p class='muted'>Last checked {esc(_t(checked_at.isoformat()))}. "
              f"Readings from the <a href='{config.SOURCE_URL}'>{esc(config.SOURCE_NAME)}</a>.</p>",
              "<div class='notice'><b>This is not a warning system.</b> It is a public prototype that "
@@ -137,6 +138,23 @@ def render(site_dir: Path, latest: dict | None, national_rows: list[dict], histo
                 f"<td data-l='Last 48 h'>{_spark(history.get(r['id'], []))}</td></tr>")
         parts.append("</table></div>")
 
+        if record and record.get("stations"):
+            parts.append("<h2>Reporting record</h2>"
+                         f"<p class='muted small'>Share of checks since {esc(_t(record['since']))} "
+                         "at which each gauge had a reading less than "
+                         f"{config.LATE_AFTER_MIN} minutes old.</p>"
+                         "<div class='wrap'><table><tr class='head'><th>Station</th><th>Checks</th>"
+                         "<th>Reporting on time</th></tr>")
+            for spec in config.CORRIDOR:
+                s = record["stations"].get(spec["id"])
+                if not s:
+                    continue
+                pct = 100 * s["ok"] / s["checks"] if s["checks"] else 0
+                parts.append(f"<tr><td>{esc(spec['label'])}</td><td>{s['checks']}</td>"
+                             f"<td><span class='bar'><span style='width:{pct:.0f}%'></span></span> "
+                             f"{pct:.0f}%</td></tr>")
+            parts.append("</table></div>")
+
         n = latest["national"]
         parts.append("<h2>All DHM river stations</h2><div class='kpis'>"
                      f"<div class='kpi'><b>{n['OK']}</b>reporting</div>"
@@ -155,7 +173,7 @@ def render(site_dir: Path, latest: dict | None, national_rows: list[dict], histo
         parts.append("</table></div>")
 
     parts.append("<footer class='muted'>Code and method: "
-                 "<a href='https://github.com/groxburgh/flood-warning-system'>github.com/groxburgh/flood-warning-system</a>. "
-                 "Raw history (CSV): <a href='https://github.com/groxburgh/flood-warning-system/tree/data'>"
+                 "<a href='https://github.com/groxburgh/nepal-flood-gauge-monitor'>github.com/groxburgh/nepal-flood-gauge-monitor</a>. "
+                 "Raw history (CSV): <a href='https://github.com/groxburgh/nepal-flood-gauge-monitor/tree/data'>"
                  "<code>data</code> branch</a>.</footer></main></body></html>")
     (site_dir / "index.html").write_text("".join(parts), encoding="utf-8")

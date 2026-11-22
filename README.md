@@ -1,8 +1,10 @@
-# Bhote Koshi–Trishuli gauge watch
+# Nepal flood gauge monitor
 
-A public monitoring prototype for the river corridor in Nepal hit by flash floods in July 2025 and August 2026. Every 30 minutes it reads the live gauge feed published by Nepal's Department of Hydrology and Meteorology (DHM), checks whether each gauge on the corridor is still reporting, flags fast rises in water level, and publishes the result as a status page.
+A public monitoring prototype for the Bhote Koshi–Trishuli river corridor in Nepal, hit by flash floods in July 2025 and August 2026. Every 30 minutes it reads the live gauge feed published by Nepal's Department of Hydrology and Meteorology (DHM), checks whether each gauge on the corridor is still reporting, flags fast rises in water level, and publishes the result as a status page.
 
-**Status page:** https://groxburgh.github.io/flood-warning-system/
+**Status page:** https://groxburgh.github.io/nepal-flood-gauge-monitor/
+
+[![The status page on 22 November 2026: the three upstream gauges show no data while DHM's status still reads "below warning level"](docs/img/status-page.png)](https://groxburgh.github.io/nepal-flood-gauge-monitor/)
 
 This is not a warning system and must not be relied on as one. Checks run on GitHub's scheduler, which can delay or skip runs, and the thresholds are uncalibrated. For flood warnings in Nepal, use [DHM](https://www.dhm.gov.np/) and [hydrology.gov.np](https://hydrology.gov.np/).
 
@@ -61,6 +63,7 @@ GitHub Actions (every 30 min)
 - **Load on DHM.** One page request every 30 minutes, with a user agent that links back here.
 - **History.** Raw readings, national counts and state changes are plain CSV on the [`data`](../../tree/data) branch, so the main branch history stays readable.
 - **Failure.** Requests to DHM are retried three times. If the page still cannot be read, or changes shape, the check logs a `SOURCE ERROR` and the status page says so while keeping the last good data. A source error is shown as a warning rather than a failed run, so an unattended project does not send an email every 30 minutes. Errors in this project's own code still fail the run.
+- **Reporting record.** Each check also stores every corridor gauge's state, so the page shows what share of checks found each gauge reporting on time. When monitoring ends, that table is the project's result.
 - **End date.** After `END_AT`, the next run renders the archive page and writes an `ARCHIVED` marker to the `data` branch. Every later run stops at its first step.
 
 Run it locally:
