@@ -8,3 +8,4 @@ fetched_at_utc,station_id,station,event,detail
 2026-11-22T11:03:37.479949+00:00,5705,Trishuli at Galchi,STATE,first check -> OK
 2026-11-22T11:03:37.479949+00:00,4781,Trishuli River at Kali Khola,STATE,first check -> LATE
 2026-11-22T11:03:37.479949+00:00,4661,Trishuli River at Bhorle,STATE,first check -> NO DATA
+2026-11-22T11:35:48.053863+00:00,4781,Trishuli River at Kali Khola,STATE,LATE -> SILENT
