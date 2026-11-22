@@ -150,5 +150,6 @@ def render(site_dir: Path, latest: dict | None, national_rows: list[dict], histo
 
     parts.append("<footer class='muted'>Code and method: "
                  "<a href='https://github.com/groxburgh/flood-warning-system'>github.com/groxburgh/flood-warning-system</a>. "
-                 "Raw history is on the repository's <code>data</code> branch.</footer></main></body></html>")
+                 "Raw history (CSV): <a href='https://github.com/groxburgh/flood-warning-system/tree/data'>"
+                 "<code>data</code> branch</a>.</footer></main></body></html>")
     (site_dir / "index.html").write_text("".join(parts), encoding="utf-8")
