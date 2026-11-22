@@ -87,5 +87,13 @@ def load_latest(store: Path) -> dict | None:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+ARCHIVED = "ARCHIVED"
+
+
+def mark_archived(store: Path, end_at: datetime) -> None:
+    """Leave a marker so later scheduled runs can skip all work."""
+    (store / ARCHIVED).write_text(f"Monitoring ended {end_at.isoformat()}\n", encoding="utf-8")
+
+
 def save_latest(store: Path, latest: dict) -> None:
     (store / LATEST).write_text(json.dumps(latest, indent=2), encoding="utf-8")

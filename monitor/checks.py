@@ -42,16 +42,20 @@ def silence(station: dict, now: datetime) -> tuple[str, float | None]:
     return OK, age
 
 
-def rapid_rise(history: list[tuple[datetime, float]]) -> float | None:
+def rapid_rise(history: list[tuple[datetime, float]], now: datetime) -> float | None:
     """Return the rise in metres if the latest reading is RISE_M above any
     reading in the preceding RISE_WINDOW_MIN; otherwise None.
 
+    Only current rises count: if the latest reading is older than the window,
+    the station is reported by the silence check instead, not as rising.
     `history` is (reading_time, value) for one station, any order.
     """
     if len(history) < 2:
         return None
     pts = sorted(history)
     latest_t, latest_v = pts[-1]
+    if latest_t < now - timedelta(minutes=config.RISE_WINDOW_MIN):
+        return None
     window_start = latest_t - timedelta(minutes=config.RISE_WINDOW_MIN)
     earlier = [v for t, v in pts[:-1] if t >= window_start]
     if not earlier:

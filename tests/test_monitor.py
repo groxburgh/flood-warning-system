@@ -44,10 +44,56 @@ def test_rapid_rise_flags_only_above_threshold():
     t = NOW
     slow = [(t - timedelta(minutes=50), 1.0), (t, 1.0 + config.RISE_M / 2)]
     fast = [(t - timedelta(minutes=50), 1.0), (t, 1.0 + config.RISE_M + 0.1)]
-    stale = [(t - timedelta(minutes=config.RISE_WINDOW_MIN + 30), 1.0), (t, 3.0)]
-    assert checks.rapid_rise(slow) is None
-    assert checks.rapid_rise(fast) == pytest.approx(config.RISE_M + 0.1)
-    assert checks.rapid_rise(stale) is None
+    gap = [(t - timedelta(minutes=config.RISE_WINDOW_MIN + 30), 1.0), (t, 3.0)]
+    assert checks.rapid_rise(slow, NOW) is None
+    assert checks.rapid_rise(fast, NOW) == pytest.approx(config.RISE_M + 0.1)
+    assert checks.rapid_rise(gap, NOW) is None
+
+
+def test_old_rise_is_not_reported_as_current():
+    # A rise that happened two days ago, after which the station went quiet,
+    # must not keep showing as "rapid rise" on today's page.
+    old = NOW - timedelta(days=2)
+    history = [(old - timedelta(minutes=30), 1.0), (old, 2.0)]
+    assert checks.rapid_rise(history, NOW) is None
+
+
+def test_fetch_retries_then_succeeds(monkeypatch):
+    calls = {"n": 0}
+
+    class Resp:
+        text = "ok"
+
+        def raise_for_status(self):
+            pass
+
+    def flaky_get(*a, **k):
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise fetch.requests.ConnectionError("down")
+        return Resp()
+
+    monkeypatch.setattr(fetch.requests, "get", flaky_get)
+    assert fetch.fetch_page(attempts=3, backoff_s=0) == "ok"
+    assert calls["n"] == 3
+
+
+def test_after_end_date_page_is_archived_and_no_fetch(tmp_path, monkeypatch):
+    ids = [c["id"] for c in config.CORRIDOR]
+    src = tmp_path / "page.html"
+    src.write_text(page([station(i, 10) for i in ids]), encoding="utf-8")
+    store, site = tmp_path / "store", tmp_path / "site"
+    assert run.main(["--store", str(store), "--site", str(site), "--html", str(src), "--now", NOW.isoformat()]) == 0
+
+    def no_fetch(*a, **k):
+        raise AssertionError("must not contact DHM after the end date")
+
+    monkeypatch.setattr(fetch, "fetch_page", no_fetch)
+    after = (datetime.fromisoformat(config.END_AT) + timedelta(minutes=5)).isoformat()
+    assert run.main(["--store", str(store), "--site", str(site), "--now", after]) == 0
+    html = (site / "index.html").read_text()
+    assert "Monitoring ended" in html and "not current" in html
+    assert (store / "ARCHIVED").exists()
 
 
 def test_full_pass_offline(tmp_path):
@@ -68,6 +114,6 @@ def test_source_error_keeps_previous_page(tmp_path):
     bad = tmp_path / "bad.html"
     bad.write_text("<html>changed layout</html>")
     store, site = tmp_path / "store", tmp_path / "site"
-    assert run.main(["--store", str(store), "--site", str(site), "--html", str(bad), "--now", NOW.isoformat()]) == 1
+    assert run.main(["--store", str(store), "--site", str(site), "--html", str(bad), "--now", NOW.isoformat()]) == 2
     assert "could not read" in (site / "index.html").read_text()
     assert "SOURCE ERROR" in (store / "events.csv").read_text()

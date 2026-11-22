@@ -37,3 +37,11 @@ RISE_WINDOW_MIN = 60
 
 # How much corridor history the status page charts.
 CHART_HOURS = 48
+
+# The project runs unattended until this moment (UTC), then stops requesting
+# data from DHM and relabels the status page as an archive. Extend it here.
+END_AT = "2027-01-21T00:00:00+00:00"
+
+# Retries for a failed request to DHM before the check is recorded as a source error.
+FETCH_ATTEMPTS = 3
+FETCH_BACKOFF_S = 20

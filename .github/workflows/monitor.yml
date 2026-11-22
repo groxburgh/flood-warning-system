@@ -24,16 +24,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
-      monitor_outcome: ${{ steps.monitor.outcome }}
+      deploy: ${{ steps.gate.outputs.deploy }}
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-
-      - run: pip install -r requirements.txt
 
       - name: Check out history (data branch)
         env:
@@ -46,12 +39,40 @@ jobs:
             mkdir store && git -C store init --quiet -b data && git -C store remote add origin "$url"
           fi
 
+      # After the end date (monitor/config.py END_AT) the first run writes an
+      # ARCHIVED marker; every later run stops here and does nothing.
+      - name: Stop if monitoring has ended
+        id: gate
+        run: |
+          if [ -f store/ARCHIVED ]; then
+            echo "Monitoring has ended: $(cat store/ARCHIVED)"
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-python@v5
+        if: steps.gate.outputs.deploy == 'true'
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - if: steps.gate.outputs.deploy == 'true'
+        run: pip install -r requirements.txt
+
       - name: Run monitor
-        id: monitor
-        continue-on-error: true
-        run: python -m monitor.run --store store --site site
+        if: steps.gate.outputs.deploy == 'true'
+        run: |
+          code=0
+          python -m monitor.run --store store --site site || code=$?
+          if [ "$code" = "2" ]; then
+            echo "::warning::Could not read DHM's page; recorded on the status page."
+          elif [ "$code" != "0" ]; then
+            exit "$code"
+          fi
 
       - name: Save history
+        if: steps.gate.outputs.deploy == 'true'
         run: |
           cd store
           git config user.name "gauge-watch-bot"
@@ -61,16 +82,13 @@ jobs:
           git push --quiet origin data
 
       - uses: actions/upload-pages-artifact@v3
+        if: steps.gate.outputs.deploy == 'true'
         with:
           path: site
 
-      - name: Fail the run if DHM could not be read
-        if: steps.monitor.outcome == 'failure'
-        run: exit 1
-
   deploy:
     needs: check
-    if: always() && needs.check.result != 'cancelled'
+    if: needs.check.outputs.deploy == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

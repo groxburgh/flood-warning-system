@@ -85,7 +85,8 @@ table.cards td{border:0;padding:4px 0}table.cards td[data-l]::before{content:att
 
 
 def render(site_dir: Path, latest: dict | None, national_rows: list[dict], history: dict,
-           events: list[dict], checked_at: datetime, source_error: str | None = None) -> None:
+           events: list[dict], checked_at: datetime, source_error: str | None = None,
+           archived_at: datetime | None = None) -> None:
     site_dir.mkdir(parents=True, exist_ok=True)
     esc = html.escape
     parts = [f"<!doctype html><html lang='en'><head><meta charset='utf-8'>"
@@ -99,6 +100,11 @@ def render(site_dir: Path, latest: dict | None, national_rows: list[dict], histo
              "Checks run roughly every 30 minutes and can be delayed. For flood warnings in Nepal, use "
              "<a href='https://www.dhm.gov.np/'>DHM</a> and "
              "<a href='https://hydrology.gov.np/'>hydrology.gov.np</a>.</div>"]
+
+    if archived_at:
+        parts.append(f"<div class='notice error'><b>Monitoring ended on {esc(_t(archived_at.isoformat()))}.</b> "
+                     "This page is an archive of the last check. The readings below are not current. "
+                     "The full record is on the repository's <code>data</code> branch.</div>")
 
     if source_error:
         parts.append(f"<div class='notice error'><b>The last check could not read DHM's page.</b> "

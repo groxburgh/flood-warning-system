@@ -6,11 +6,23 @@ A public monitoring prototype for the river corridor in Nepal hit by flash flood
 
 This is not a warning system and must not be relied on as one. Checks run on GitHub's scheduler, which can delay or skip runs, and the thresholds are uncalibrated. For flood warnings in Nepal, use [DHM](https://www.dhm.gov.np/) and [hydrology.gov.np](https://hydrology.gov.np/).
 
+The monitor runs unattended from 22 November 2026 to **21 January 2027**. After that it stops requesting data and the status page becomes a labelled archive. The end date is `END_AT` in [`monitor/config.py`](monitor/config.py).
+
 ## Why gauge silence matters
 
-On 26 August 2026 an ice-rock avalanche from the north face of Langtang Lirung became a debris flow in the Lhende Khola and travelled down the Bhote Koshi into the Trishuli. According to the International Centre for Integrated Mountain Development's page "Kyirong-Rasuwa Flood 2026 | Nepal-China Cryosphere Risk" (published 28 August 2026, updated 14 October 2026), several gauging stations in the upper corridor were destroyed, the Rasuwagadhi gauge showed no rise before it was destroyed, and no warning reached Rasuwagadhi or Timure. Dr. Santosh Kumar Rauniyar's "The Langtang Collapse" (Sasakawa Peace Foundation, September 2026) names four hydrometric stations destroyed by the flood: Betrawati, Bhote Koshi, Syabrubesi and Malekhu. The two accounts give different minute-by-minute timings for when DHM learned of the flood and when SMS alerts went out; both place the alerts after the surge had reached the border settlements.
+On 26 August 2026 an ice-rock avalanche from the north face of Langtang Lirung became a debris flow in the Lhende Khola and travelled down the Bhote Koshi into the Trishuli. According to the International Centre for Integrated Mountain Development's page "Kyirong-Rasuwa Flood 2026 | Nepal-China Cryosphere Risk" (published 28 August 2026, updated 14 October 2026), the Rasuwagadhi gauge showed no rise before it was destroyed, and no warning reached Rasuwagadhi or Timure.
 
-A gauge that stops reporting may have a technical fault, or it may have been hit by the flood it was there to measure. DHM's public feed does not distinguish between the two, and silence on this corridor is only noticed if someone happens to look. This project checks for it on a schedule and keeps a public record.
+The Flood Forecasting Division's technical report, as reported in OnlineKhabar's "Technical report details Bhotekoshi flood's journey from Tibet to Devghat" (27 August 2026), sets out the morning:
+
+| Time (NPT) | Event |
+|---|---|
+| 08:37 | Seismic signal recorded |
+| 08:50 | Bhotekoshi–Syafrubesi gauge stops transmitting (last reading 1.62 m at 08:40, warning level 6 m) |
+| 09:00 | Flood Forecasting Division hears of the flood by telephone from the district office and Betrawati station staff |
+| 09:15 | First SMS warnings go out, 679,295 messages along the corridor |
+| 09:20 | Betrawati gauge stops transmitting |
+
+The first instrumental sign of the flood on Nepal's side was a gauge falling silent, and the river level it last reported was calm. A gauge that stops reporting may have a technical fault, or it may have been hit by the flood it was there to measure. DHM's public feed does not distinguish between the two, and silence is only noticed if someone happens to look. This project checks for it on a schedule and keeps a public record.
 
 ## Research behind this
 
@@ -32,7 +44,7 @@ All thresholds live in [`monitor/config.py`](monitor/config.py). They are assump
 
 ## What the first run found
 
-The first check (22 November 2026, about three months after the flood) recorded no current reading for the mainstem gauges at Rasuwagadi, Shyaprubesi and Betrawati. That fits the reports above that these stations were destroyed, but this project cannot confirm why a station is silent. In the same feed, DHM's status field still read "BELOW WARNING LEVEL" for each of those stations, so anyone reading the status alone would see a calm river rather than a missing gauge. Nationally, roughly half of the listed river stations had no reading in the feed. Some of those may be seasonal, manual or retired stations rather than failures; the feed does not say which.
+The first check (22 November 2026, about three months after the flood) recorded no current reading for the mainstem gauges at Rasuwagadi, Shyaprubesi and Betrawati. Setopati's "Government installs VSAT camera in Timure to monitor Bhotekoshi after flood" (3 September 2026) reports that these three stations were swept away, could not be restored immediately, and were replaced for now by a camera at Timure watched from Kathmandu. Three months on, DHM's feed still has no readings from them. In the same feed, DHM's status field still read "BELOW WARNING LEVEL" for each of those stations, so anyone reading the status alone would see a calm river rather than a missing gauge. Nationally, roughly half of the listed river stations had no reading in the feed. Some of those may be seasonal, manual or retired stations rather than failures; the feed does not say which.
 
 ## How it works
 
@@ -48,7 +60,8 @@ GitHub Actions (every 30 min)
 - **Privacy.** DHM's feed also contains station staff names and phone numbers. The parser keeps a fixed whitelist of fields, and a test checks that nothing else gets through.
 - **Load on DHM.** One page request every 30 minutes, with a user agent that links back here.
 - **History.** Raw readings, national counts and state changes are plain CSV on the [`data`](../../tree/data) branch, so the main branch history stays readable.
-- **Failure.** If DHM's page changes shape, the run fails visibly, logs a `SOURCE ERROR`, and the status page says so while keeping the last good data.
+- **Failure.** Requests to DHM are retried three times. If the page still cannot be read, or changes shape, the check logs a `SOURCE ERROR` and the status page says so while keeping the last good data. A source error is shown as a warning rather than a failed run, so an unattended project does not send an email every 30 minutes. Errors in this project's own code still fail the run.
+- **End date.** After `END_AT`, the next run renders the archive page and writes an `ARCHIVED` marker to the `data` branch. Every later run stops at its first step.
 
 Run it locally:
 
@@ -60,7 +73,7 @@ python -m monitor.run --store store --site site      # writes site/index.html
 
 ## Limits
 
-- GitHub's scheduler is best-effort, and GitHub disables scheduled workflows in public repositories after 60 days without repository activity.
+- GitHub's scheduler is best-effort, and GitHub disables scheduled workflows in public repositories after 60 days without repository activity, which may stop runs before the end date.
 - A 30-minute check is far too slow to warn anyone about a surge that, by the accounts above, crossed from the border to Betrawati in well under an hour.
 - The rapid-rise check needs two readings inside its window, so it says nothing about a station that is already silent.
 - The page shows what DHM publishes. It has no independent sensors.

@@ -26,7 +26,7 @@ def corridor_status(stations: list[dict], history: dict, now: datetime) -> list[
             continue
         state, age = checks.silence(s, now)
         when, value = checks.reading_of(s)
-        rise = checks.rapid_rise(history.get(spec["id"], []))
+        rise = checks.rapid_rise(history.get(spec["id"], []), now)
         rows.append({
             **spec,
             "state": state,
@@ -70,17 +70,30 @@ def main(argv: list[str] | None = None) -> int:
     args.store.mkdir(parents=True, exist_ok=True)
     now = datetime.fromisoformat(args.now) if args.now else datetime.now(timezone.utc)
     previous = store.load_latest(args.store)
+    end_at = datetime.fromisoformat(config.END_AT)
+
+    if now >= end_at:
+        # Monitoring period is over: no request to DHM, page relabelled as an archive.
+        last = datetime.fromisoformat(previous["checked_at"]) if previous else now
+        site.render(args.site, previous, store.load_national(args.store),
+                    store.load_corridor_history(args.store), store.load_events(args.store),
+                    checked_at=last, archived_at=end_at)
+        store.mark_archived(args.store, end_at)
+        print(f"monitoring ended at {end_at.isoformat()}; archive page rendered")
+        return 0
 
     try:
         html = args.html.read_text(encoding="utf-8") if args.html else fetch.fetch_page()
         stations = fetch.parse_stations(html)
-    except Exception as exc:  # noqa: BLE001 - record source failure, then fail the run
+    except Exception as exc:  # noqa: BLE001 - record source failure on the page and in the log
         store.append_events(args.store, [[now.isoformat(), "", "DHM source", "SOURCE ERROR", str(exc)[:300]]])
         site.render(args.site, previous, store.load_national(args.store),
                     store.load_corridor_history(args.store), store.load_events(args.store),
                     source_error=f"{type(exc).__name__}: {exc}"[:300], checked_at=now)
         print(f"source error: {exc}", file=sys.stderr)
-        return 1
+        # Exit 2 marks a source error. The workflow treats it as handled (shown on the
+        # page) so an unattended project does not send a failure email every 30 minutes.
+        return 2
 
     corridor_ids = {c["id"] for c in config.CORRIDOR}
     readings = []

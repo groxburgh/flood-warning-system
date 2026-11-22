@@ -10,10 +10,11 @@ from __future__ import annotations
 
 import json
 import re
+import time
 
 import requests
 
-from .config import SOURCE_URL
+from .config import FETCH_ATTEMPTS, FETCH_BACKOFF_S, SOURCE_URL
 
 KEEP_FIELDS = (
     "id",
@@ -43,10 +44,20 @@ class SourceFormatError(RuntimeError):
     """The page no longer looks the way this parser expects."""
 
 
-def fetch_page(url: str = SOURCE_URL, timeout: int = 60) -> str:
-    resp = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=timeout)
-    resp.raise_for_status()
-    return resp.text
+def fetch_page(url: str = SOURCE_URL, timeout: int = 60, attempts: int = FETCH_ATTEMPTS,
+               backoff_s: float = FETCH_BACKOFF_S) -> str:
+    """GET the page, retrying transient failures with a growing pause."""
+    last_exc: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            resp = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=timeout)
+            resp.raise_for_status()
+            return resp.text
+        except requests.RequestException as exc:
+            last_exc = exc
+            if attempt < attempts:
+                time.sleep(backoff_s * attempt)
+    raise last_exc  # type: ignore[misc]
 
 
 def sanitize(station: dict) -> dict:
