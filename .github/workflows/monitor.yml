@@ -1,0 +1,77 @@
+name: monitor
+
+on:
+  schedule:
+    # Every 30 minutes, offset from the top of the hour. GitHub may delay or
+    # skip scheduled runs under load; the status page shows the real check time.
+    - cron: "7,37 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: monitor
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      monitor_outcome: ${{ steps.monitor.outcome }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Check out history (data branch)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --exit-code --heads "$url" data >/dev/null; then
+            git clone --quiet --depth 1 --branch data "$url" store
+          else
+            mkdir store && git -C store init --quiet -b data && git -C store remote add origin "$url"
+          fi
+
+      - name: Run monitor
+        id: monitor
+        continue-on-error: true
+        run: python -m monitor.run --store store --site site
+
+      - name: Save history
+        run: |
+          cd store
+          git config user.name "gauge-watch-bot"
+          git config user.email "gauge-watch-bot@users.noreply.github.com"
+          git add -A
+          git commit --quiet -m "check $(date -u +%Y-%m-%dT%H:%MZ)" || { echo "no changes"; exit 0; }
+          git push --quiet origin data
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Fail the run if DHM could not be read
+        if: steps.monitor.outcome == 'failure'
+        run: exit 1
+
+  deploy:
+    needs: check
+    if: always() && needs.check.result != 'cancelled'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
