@@ -5,6 +5,9 @@ on:
     # Every 30 minutes, offset from the top of the hour. GitHub may delay or
     # skip scheduled runs under load; the status page shows the real check time.
     - cron: "7,37 * * * *"
+  push:
+    branches: [main]
+    paths: ["monitor/**", ".github/workflows/monitor.yml"]
   workflow_dispatch:
 
 permissions:
