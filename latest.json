@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-22T11:37:12.828267+00:00",
+  "checked_at": "2026-11-22T11:44:56.294650+00:00",
   "corridor": [
     {
       "id": 4913,
@@ -34,7 +34,7 @@
       "label": "Trishuli Khola at Dhunche",
       "role": "tributary",
       "state": "OK",
-      "age_min": 12,
+      "age_min": 20,
       "value": 1.93399953842,
       "reading_time": "2026-11-22T11:25:00+00:00",
       "dhm_status": "BELOW WARNING LEVEL",
@@ -90,7 +90,7 @@
       "label": "Trishuli at Galchi",
       "role": "mainstem",
       "state": "OK",
-      "age_min": 2,
+      "age_min": 10,
       "value": 358.95489502,
       "reading_time": "2026-11-22T11:35:00+00:00",
       "dhm_status": "BELOW WARNING LEVEL",
@@ -104,7 +104,7 @@
       "label": "Trishuli River at Kali Khola",
       "role": "mainstem",
       "state": "SILENT",
-      "age_min": 372,
+      "age_min": 380,
       "value": 2.625,
       "reading_time": "2026-11-22T05:25:00+00:00",
       "dhm_status": "BELOW WARNING LEVEL",
