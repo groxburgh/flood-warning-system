@@ -26,7 +26,7 @@ jobs:
     outputs:
       deploy: ${{ steps.gate.outputs.deploy }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Check out history (data branch)
         env:
@@ -51,7 +51,7 @@ jobs:
             echo "deploy=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         if: steps.gate.outputs.deploy == 'true'
         with:
           python-version: "3.12"
@@ -81,7 +81,7 @@ jobs:
           git commit --quiet -m "check $(date -u +%Y-%m-%dT%H:%MZ)" || { echo "no changes"; exit 0; }
           git push --quiet origin data
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         if: steps.gate.outputs.deploy == 'true'
         with:
           path: site
@@ -95,4 +95,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
