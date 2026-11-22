@@ -12,6 +12,12 @@ On 26 August 2026 an ice-rock avalanche from the north face of Langtang Lirung b
 
 A gauge that stops reporting may have a technical fault, or it may have been hit by the flood it was there to measure. DHM's public feed does not distinguish between the two, and silence on this corridor is only noticed if someone happens to look. This project checks for it on a schedule and keeps a public record.
 
+## Research behind this
+
+The reasoning this monitor rests on is in [`docs/`](docs/): seven research runs written 28–29 August 2026 on why the warning chain failed, the method behind them, an adversarial review that corrected a significant error in their own arithmetic, and the pre-build specification. The casualty figures in that research are August snapshots and have been superseded; see [`docs/ADDENDUM-2026-11.md`](docs/ADDENDUM-2026-11.md).
+
+The corrected error bears directly on what this monitor is for. The research first estimated that a dead-station alarm would have bought about 20 minutes of warning on 26 August. Recomputed against the measured 5 to 15 minute lag in DHM's data, the figure is between 4 minutes worse and 11 minutes better than the SMS alerts that actually went out ([`docs/review/review-adjudication.md`](docs/review/review-adjudication.md)). Measured against when DHM actually learned of the flood, by telephone, the alarm comes out worse in every scenario the review tested except the most favourable one. The case that survives is about events nobody witnesses (at night, in the off season, in empty upper catchments), and about knowing at all times which gauges a warning would depend on.
+
 ## What it does
 
 | Check | Rule | Why |
@@ -58,10 +64,6 @@ python -m monitor.run --store store --site site      # writes site/index.html
 - A 30-minute check is far too slow to warn anyone about a surge that, by the accounts above, crossed from the border to Betrawati in well under an hour.
 - The rapid-rise check needs two readings inside its window, so it says nothing about a station that is already silent.
 - The page shows what DHM publishes. It has no independent sensors.
-
-## Research
-
-Background research on warning options for this corridor (detection methods, travel times, institutional constraints) will be added under [`research/`](research/).
 
 ## Data and licence
 
