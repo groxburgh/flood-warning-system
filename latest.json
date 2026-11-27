@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-27T03:13:52.785384+00:00",
+  "checked_at": "2026-11-27T13:02:34.781820+00:00",
   "corridor": [
     {
       "id": 4913,
@@ -34,9 +34,9 @@
       "label": "Trishuli Khola at Dhunche",
       "role": "tributary",
       "state": "OK",
-      "age_min": 19,
-      "value": 1.92309951782,
-      "reading_time": "2026-11-27T02:55:00+00:00",
+      "age_min": 18,
+      "value": 1.92389965057,
+      "reading_time": "2026-11-27T12:45:00+00:00",
       "dhm_status": "BELOW WARNING LEVEL",
       "dhm_trend": "STEADY",
       "warning_level": "3.2",
@@ -90,9 +90,9 @@
       "label": "Trishuli at Galchi",
       "role": "mainstem",
       "state": "OK",
-      "age_min": 9,
-      "value": 358.928497314,
-      "reading_time": "2026-11-27T03:05:00+00:00",
+      "age_min": 8,
+      "value": 358.912200928,
+      "reading_time": "2026-11-27T12:55:00+00:00",
       "dhm_status": "BELOW WARNING LEVEL",
       "dhm_trend": "STEADY",
       "warning_level": "367",
@@ -104,9 +104,9 @@
       "label": "Trishuli River at Kali Khola",
       "role": "mainstem",
       "state": "OK",
-      "age_min": 9,
-      "value": 2.56599998474,
-      "reading_time": "2026-11-27T03:05:00+00:00",
+      "age_min": 8,
+      "value": 2.57699966431,
+      "reading_time": "2026-11-27T12:55:00+00:00",
       "dhm_status": "BELOW WARNING LEVEL",
       "dhm_trend": "STEADY",
       "warning_level": "10.8",
@@ -130,9 +130,9 @@
   ],
   "national": {
     "total": 334,
-    "OK": 151,
+    "OK": 154,
     "LATE": 8,
-    "SILENT": 9,
+    "SILENT": 6,
     "NO DATA": 166
   },
   "source": "https://www.dhm.gov.np/hydrology/floodMonitoring"
